@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MoVE Countdown</title>
+  <style>
+    :root{
+      --bg1:#0b1220;
+      --bg2:#101b33;
+      --accent:#79e2ff;
+      --text:#ffffff;
+      --muted:rgba(255,255,255,.75);
+      --card:rgba(255,255,255,.08);
+      --border:rgba(255,255,255,.16);
+    }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 500px at 20% 10%, #1a2c5a 0%, transparent 60%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+      color:var(--text);
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .wrap{
+      width:min(920px, 94vw);
+      padding:18px 18px 16px;
+      border-radius:18px;
+      background: rgba(0,0,0,.20);
+      border:1px solid var(--border);
+      box-shadow: 0 12px 40px rgba(0,0,0,.35);
+    }
+    .title{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:12px;
+      margin:0 0 12px 0;
+    }
+    .title h1{
+      font-size:18px;
+      margin:0;
+      letter-spacing:.2px;
+      font-weight:700;
+    }
+    .title .date{
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:12px;
+    }
+    .box{
+      padding:14px 12px;
+      border-radius:14px;
+      background: var(--card);
+      border:1px solid rgba(255,255,255,.10);
+      text-align:center;
+    }
+    .num{
+      font-size:34px;
+      line-height:1.05;
+      font-weight:800;
+      letter-spacing:.5px;
+      color: var(--accent);
+    }
+    .label{
+      margin-top:6px;
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:.6px;
+      text-transform:uppercase;
+    }
+    .footer{
+      margin-top:12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .badge{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color:rgba(255,255,255,.86);
+    }
+    @media (max-width:520px){
+      .grid{ grid-template-columns: repeat(2, 1fr); }
+      .num{ font-size:30px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" role="group" aria-label="Countdown bis MoVE Training">
+    <div class="title">
+      <h1>⏳ Countdown bis zum MoVE Training</h1>
+      <div class="date">Zieldatum: <strong>01.07.2026</strong></div>
+    </div>
+
+    <div class="grid" aria-live="polite">
+      <div class="box"><div class="num" id="d">–</div><div class="label">Tage</div></div>
+      <div class="box"><div class="num" id="h">–</div><div class="label">Stunden</div></div>
+      <div class="box"><div class="num" id="m">–</div><div class="label">Minuten</div></div>
+      <div class="box"><div class="num" id="s">–</div><div class="label">Sekunden</div></div>
+    </div>
+
+    <div class="footer">
+      <span class="badge" id="status">Lädt…</span>
+      <span>Zeitzone: <span id="tz">lokal</span></span>
+    </div>
+  </div>
+
+  <script>
+    // Ziel: 01.07.2026, 00:00:00 in lokaler Zeit des Betrachters
+    const target = new Date(2026, 6, 1, 0, 0, 0); // Monate: 0=Jan ... 6=Jul
+
+    const el = {
+      d: document.getElementById('d'),
+      h: document.getElementById('h'),
+      m: document.getElementById('m'),
+      s: document.getElementById('s'),
+      status: document.getElementById('status'),
+      tz: document.getElementById('tz')
+    };
+
+    // Zeitzone anzeigen (sofern verfügbar)
+    try {
+      el.tz.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone || 'lokal';
+    } catch { /* ignore */ }
+
+    const pad2 = (n) => String(n).padStart(2,'0');
+
+    function tick(){
+      const now = new Date();
+      let diff = target - now;
+
+      if (diff <= 0){
+        el.d.textContent = '0';
+        el.h.textContent = '00';
+        el.m.textContent = '00';
+        el.s.textContent = '00';
+        el.status.textContent = '🎉 Es geht los!';
+        return;
+      }
+
+      const sec = Math.floor(diff / 1000);
+      const days = Math.floor(sec / 86400);
+      const hours = Math.floor((sec % 86400) / 3600);
+      const mins = Math.floor((sec % 3600) / 60);
+      const secs = sec % 60;
+
+      el.d.textContent = days;
+      el.h.textContent = pad2(hours);
+      el.m.textContent = pad2(mins);
+      el.s.textContent = pad2(secs);
+      el.status.textContent = '🚀 Training startet bald';
+    }
+
+    tick();
+    setInterval(tick, 1000);
+  </script>
+</body>
+</html>
