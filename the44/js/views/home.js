@@ -51,7 +51,7 @@ export async function render() {
       <div class="hero-top">
         <div>
           <h2>${esc(p.name)}</h2>
-          <p>${esc(p.address)}${p.unit ? ` · ${esc(p.unit)}` : ''}</p>
+          <p>${esc([p.address, p.unit].filter(Boolean).join(' · ')) || 'Adresse unter Objektdaten eintragen'}</p>
         </div>
         <span class="pill ${rental ? 'pos' : 'accent'}">${esc(status)}</span>
       </div>

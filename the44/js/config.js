@@ -2,7 +2,7 @@
 
 export const PROPERTY_DEFAULTS = {
   name: 'THE44',
-  address: 'Hasseer Straße 44, Kiel',
+  address: '',
   unit: '',
   sizeM2: null,
   rooms: null,

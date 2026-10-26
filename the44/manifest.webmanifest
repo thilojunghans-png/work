@@ -1,7 +1,7 @@
 {
-  "name": "THE44 – Kapitalanlage Kiel",
+  "name": "THE44 – Immobilien-App",
   "short_name": "THE44",
-  "description": "Bau, Buchhaltung, Dokumente und Vermietung der Kapitalanlage THE44, Hasseer Straße 44, Kiel.",
+  "description": "Bau, Buchhaltung, Dokumente und Vermietung einer Kapitalanlage-Immobilie.",
   "lang": "de",
   "start_url": "./#/home",
   "scope": "./",

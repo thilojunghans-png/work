@@ -1,4 +1,4 @@
-# THE44 – App für die Kapitalanlage Hasseer Straße 44, Kiel
+# THE44 – App für eine Kapitalanlage-Immobilie
 
 Mobile Web-App (PWA) für Bau, Buchhaltung, Dokumente und Vermietung einer Eigentumswohnung.
 Sie läuft ohne Server und Konto: Alle Daten liegen lokal auf dem Gerät (IndexedDB) und funktionieren offline.

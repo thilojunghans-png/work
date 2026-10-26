@@ -1,5 +1,5 @@
 // Offline-Cache für die App-Shell (stale-while-revalidate).
-const CACHE = 'the44-v1';
+const CACHE = 'the44-v2';
 const ASSETS = [
   './',
   './index.html',
