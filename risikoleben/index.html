@@ -260,11 +260,17 @@ function renderAngebote(){
   <a class="linkbtn" href="https://www.verivox.de/lebensversicherung/risikolebensversicherung/" target="_blank" rel="noopener">Verivox öffnen</a>
   <a class="linkbtn" href="https://www.cosmosdirekt.de/risikolebensversicherung/" target="_blank" rel="noopener">CosmosDirekt öffnen</a>
   <button class="sec" id="copyspec">Eingabe-Spickzettel kopieren</button>
+  <h3>Ergebnisse aus dem Portal einfügen</h3>
+  <div class="mut">Ergebnisliste markieren, kopieren und hier einfügen. Summe und Laufzeit werden aus deinem Bedarf angenommen; bitte kurz prüfen.</div>
+  <select id="impP">${S.p.map((p,i)=>`<option value="${i}">für ${esc(p.name)}</option>`).join("")}</select>
+  <textarea id="impT" rows="4" placeholder="Hier einfügen …"></textarea>
+  <button class="sec" id="impB">Angebote erkennen</button>
   <div class="note warn"><b>Wichtig:</b> Erst nur Preisanfragen, <b>keine</b> Anträge parallel. Abgelehnte Anträge werden im Hinweis- und Informationssystem der Versicherer gespeichert. Bei Vorerkrankungen vorab anonyme Risikovoranfrage über Makler/Honorarberater.</div></div>
  ${form}${sumLine}${groups||'<p class="mut">Noch keine Angebote erfasst.</p>'}
  <button id="addq">+ Angebot erfassen</button>`;
  $("addq").onclick=()=>{editQ=-1;renderAngebote();window.scrollTo(0,0)};
  $("copyspec").onclick=()=>copy(spec());
+ $("impB").onclick=()=>{const r=parseQuotes($("impT").value,+$("impP").value);if(!r.length){toast("Nichts erkannt. Versicherername und Beitrag müssen im Text stehen.");return}r.forEach(q=>{delete q._chk;S.quotes.push(q)});save();toast(r.length+" Angebote übernommen. Bitte Summe/Laufzeit prüfen.");renderAngebote()};
  document.querySelectorAll("[data-ed]").forEach(b=>b.onclick=()=>{editQ=+b.dataset.ed;renderAngebote();window.scrollTo(0,0)});
  document.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{if(confirm("Angebot löschen?")){S.quotes.splice(+b.dataset.rm,1);save();renderAngebote()}});
  if(q){$("qcancel").onclick=()=>{editQ=null;renderAngebote()};
@@ -272,6 +278,23 @@ function renderAngebote(){
    FEAT.forEach(f=>o[f[0]]=$("q_"+f[0]).checked);
    if(!o.sum||!o.term||!o.zahl){alert("Summe, Laufzeit und Zahlbeitrag angeben.");return}
    if(editQ>=0)S.quotes[editQ]=o;else S.quotes.push(o);editQ=null;save();renderAngebote()}}
+}
+
+/* ---------- Import aus Portal-Ergebnistext ---------- */
+const INS=["Allianz","HUK-COBURG","HUK24","HUK","CosmosDirekt","Cosmos","Hannoversche","Alte Leipziger","Zurich","Dialog","Europa","ERGO","Volkswohl Bund","Swiss Life","Canada Life","Baloise","Debeka","Nürnberger","Generali","LV 1871","Bayerische","DELA","Barmenia","Concordia","WWK","Gothaer","InterRisk","Signal Iduna","Itzehoer","Ideal","Condor","Verti","Continentale","Familienfürsorge","Basler","Mylife","Neodigital","Medien","R+V","VGH","Lebensversicherung von 1871"];
+function parseQuotes(text,pi){
+ const lines=text.split(/\n+/).map(l=>l.trim()).filter(Boolean),out=[];
+ const euro=s=>[...s.matchAll(/(\d{1,3}(?:\.\d{3})*|\d+)(?:,(\d{1,2}))?\s*(?:€|EUR|Euro)/g)].map(m=>parseFloat(m[1].replace(/\./g,"")+"."+(m[2]||"0")));
+ for(let i=0;i<lines.length;i++){
+  const hit=INS.find(n=>lines[i].toLowerCase().includes(n.toLowerCase()));
+  if(!hit)continue;
+  const win=lines.slice(i,i+6).join(" ");
+  const am=euro(win).filter(v=>v>=3&&v<=1000);
+  if(!am.length)continue;
+  const nx=INS.find(n=>lines.slice(i+1,i+6).some(l=>l.toLowerCase().includes(n.toLowerCase())&&n!==hit));
+  out.push({person:pi,src:"Portal-Import",name:lines[i].slice(0,40),zahl:am[0],hoechst:am[1]&&am[1]>am[0]?am[1]:0,type:"konstant",nachv:/nachversicher/i.test(win),verl:/verl[aä]nger/i.test(win),terminal:/unheilbar|vorab/i.test(win),kreuz:true,stund:/stundung/i.test(win),sum:needFor(pi).sum,term:needFor(pi).term,_chk:true});
+ }
+ return out;
 }
 function spec(){
  const L=["RLV-Anfrage (Überkreuz, Paar nicht verheiratet)","Tarif: Risikolebensversicherung, Überkreuz: Versicherungsnehmer = Bezugsberechtigter = jeweils der/die andere","Gesundheitsfragen nur wahrheitsgemäß, zunächst nur Preisanfrage"];
