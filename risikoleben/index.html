@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="RLV-Berater">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#0f766e">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<title>RLV-Berater</title>
+<style>
+:root{--bg:#f4f6f5;--card:#fff;--ink:#16211f;--mut:#5b6b67;--line:#dbe3e0;--acc:#0f766e;--acc2:#e6f4f1;--warn:#b45309;--warnbg:#fef3e2;--bad:#b91c1c;--badbg:#fdecec;--ok:#15803d;--okbg:#e8f6ec}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1514;--card:#17211f;--ink:#e8efed;--mut:#9fb0ab;--line:#2a3835;--acc:#2dd4bf;--acc2:#12302c;--warn:#fbbf24;--warnbg:#2f2610;--bad:#f87171;--badbg:#341616;--ok:#4ade80;--okbg:#12301c}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,system-ui,"Segoe UI",sans-serif;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+header{padding:calc(14px + env(safe-area-inset-top)) 16px 10px;background:var(--acc);color:#fff}
+@media (prefers-color-scheme:dark){header{background:#0b2e29;color:#e8efed}}
+header h1{margin:0;font-size:20px}header p{margin:2px 0 0;font-size:13px;opacity:.85}
+main{padding:12px 16px;max-width:720px;margin:0 auto}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 12px}
+.card h2{margin:0 0 8px;font-size:17px}.card h3{margin:12px 0 6px;font-size:15px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
+input,select,textarea{width:100%;font:inherit;font-size:16px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.chk{display:flex;gap:8px;align-items:center;margin:6px 0;font-size:15px;color:var(--ink)}.chk input{width:auto}
+button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:10px 14px;background:var(--acc);color:#fff}
+@media (prefers-color-scheme:dark){button{color:#06201c}}
+button.sec{background:var(--acc2);color:var(--acc)}button.del{background:var(--badbg);color:var(--bad)}
+.big{font-size:30px;font-weight:700;letter-spacing:-.5px}
+.mut{color:var(--mut);font-size:13px}
+.note{border-radius:10px;padding:10px 12px;margin:8px 0;font-size:14px}
+.note.warn{background:var(--warnbg);color:var(--warn)}.note.bad{background:var(--badbg);color:var(--bad)}.note.ok{background:var(--okbg);color:var(--ok)}.note.info{background:var(--acc2);color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}td.r,th.r{text-align:right}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;color:var(--mut);border-radius:0;padding:10px 2px;font-size:12px;font-weight:500}
+nav button.on{color:var(--acc);font-weight:700}nav span{display:block;font-size:20px}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--okbg);color:var(--ok)}
+.bar{height:10px;border-radius:6px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--acc)}
+a{color:var(--acc)}
+.linkbtn{display:block;text-decoration:none;text-align:center;background:var(--acc2);color:var(--acc);padding:10px;border-radius:10px;font-weight:600;margin:6px 0}
+</style>
+</head>
+<body>
+<header><h1>RLV-Berater</h1><p>Risikolebensversicherung für Paare ohne Trauschein</p></header>
+<main>
+<section id="s-profil" class="on"></section>
+<section id="s-bedarf"></section>
+<section id="s-angebote"></section>
+<section id="s-check"></section>
+</main>
+<nav>
+<button data-t="profil" class="on"><span>👥</span>Profil</button>
+<button data-t="bedarf"><span>🎯</span>Bedarf</button>
+<button data-t="angebote"><span>⚖️</span>Angebote</button>
+<button data-t="check"><span>✅</span>Check</button>
+</nav>
+<script>
+"use strict";
+/* ---------- Zustand ---------- */
+const DEF={
+ p:[{name:"Person A",age:35,sex:"m",smoker:false,net:3000},{name:"Person B",age:33,sex:"w",smoker:false,net:2200}],
+ kids:[],
+ debt:{rest:0,years:0,share:100,rate:0},
+ hh:{exp:3500,savings:10000,useSav:50,funeral:8000,other:[0,0]},
+ existing:[0,0],
+ par:{kg:259,waise:200,indep:25,disc:2,transit:2,kidCost:250,care:20},
+ quotes:[],done:{}
+};
+let S;
+try{S=JSON.parse(localStorage.getItem("rlv")||"null")}catch(e){S=null}
+S=Object.assign(structuredClone(DEF),S||{});
+const save=()=>{try{localStorage.setItem("rlv",JSON.stringify(S))}catch(e){}};
+const $=id=>document.getElementById(id);
+const eur=n=>Math.round(n).toLocaleString("de-DE")+" €";
+const num=v=>{const n=parseFloat(String(v).replace(",","."));return isFinite(n)?n:0};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- Rechenkern ---------- */
+function needFor(i){
+ const P=S.p[i],Sv=S.p[1-i],par=S.par,kids=S.kids.map(Number);
+ const youngest=kids.length?Math.min(...kids):null;
+ const yearsKids=kids.length?Math.max(0,par.indep-youngest):0;
+ const years=Math.max(yearsKids,par.transit);
+ const debt=S.debt.rest*S.debt.share/100;
+ const r=par.disc/100;
+ let pv=0;const rows=[];
+ for(let t=0;t<years;t++){
+  const elig=kids.filter(a=>a+t<par.indep).length;
+  const ended=kids.length-elig;
+  let exp=S.hh.exp-par.kidCost*ended;
+  exp-=(S.debt.rate||0);               // Rate entfällt, weil Darlehen getilgt wird
+  exp=Math.max(0,exp);
+  const youngestNow=kids.filter(a=>a+t<par.indep).length?Math.min(...kids.filter(a=>a+t<par.indep))+t:99;
+  const care=youngestNow<10?par.care/100:0;
+  const inc=Sv.net*(1-care)+elig*(par.kg+par.waise);
+  // Verbrauch des Verstorbenen entfällt: Anteil an den Ausgaben (am Netto gemessen)
+  const share=P.net/(P.net+Sv.net||1);
+  const expAfter=exp*(1-0.5*share);   // Hälfte des Anteils, der dem Verstorbenen "gehört", entfällt
+  const gap=Math.max(0,expAfter-inc);
+  pv+=gap*12/Math.pow(1+r,t+0.5);
+  rows.push({t,gap});
+ }
+ const funeral=S.hh.funeral;
+ const sav=S.hh.savings*S.hh.useSav/100;
+ const other=S.hh.other[i]||0, ex=S.existing[i]||0;
+ const gross=debt+pv+funeral;
+ const net=Math.max(0,gross-sav-other-ex);
+ const sum=Math.ceil(net/10000)*10000;
+ const debtYears=S.debt.years||0;
+ let term=Math.max(yearsKids,debtYears,10);
+ term=Math.max(5,Math.min(term,67-P.age));
+ return {debt,pv,funeral,sav,other,ex,gross,net,sum,yearsKids,years,term,debtYears,
+   income:Math.max(0,sum-Math.min(debt,sum)),rows};
+}
+/* grobe Orientierung: Gompertz-Sterblichkeit, versicherte Kollektive (nur Plausibilitätsband!) */
+function estimate(P,n,sumAt){
+ let surv=1,ben=0,ann=0;const v=1/1.01;
+ for(let t=0;t<n;t++){
+  const x=P.age+t;
+  const mu=0.000016*Math.exp(0.095*x)*(P.sex==="w"?0.65:1)*(P.smoker?2:1);
+  const q=1-Math.exp(-mu);
+  ann+=surv*Math.pow(v,t);
+  ben+=surv*q*sumAt(t)*Math.pow(v,t+0.5);
+  surv*=1-q;
+ }
+ const hoechst=ben/ann*1.3/12;           // Bruttobeitrag/Monat (Höchstbeitrag)
+ return {hoechst,zahl:hoechst*0.7};
+}
+
+/* ---------- Render: Profil ---------- */
+function fld(label,id,val,type="number",extra=""){return `<label for="${id}">${label}</label><input id="${id}" type="${type}" inputmode="${type==="number"?"decimal":"text"}" value="${esc(val)}" ${extra}>`}
+function renderProfil(){
+ const personCards=S.p.map((p,i)=>`<div class="card"><h2>${esc(p.name)}</h2>
+  ${fld("Name","p"+i+"name",p.name,"text")}
+  <div class="row"><div>${fld("Alter","p"+i+"age",p.age)}</div><div>${fld("Netto/Monat (€)","p"+i+"net",p.net)}</div></div>
+  <div class="row"><div><label>Geschlecht</label><select id="p${i}sex"><option value="m" ${p.sex==="m"?"selected":""}>männlich</option><option value="w" ${p.sex==="w"?"selected":""}>weiblich</option></select></div>
+  <div><label>Raucher*in</label><select id="p${i}smoker"><option value="0" ${!p.smoker?"selected":""}>Nichtraucher</option><option value="1" ${p.smoker?"selected":""}>Raucher</option></select></div></div>
+  <div class="row"><div>${fld("Bestehende RLV (€)","e"+i,S.existing[i])}</div><div>${fld("Sonst. Todesfallleistung (bAV/AG) €","o"+i,S.hh.other[i])}</div></div></div>`).join("");
+ $("s-profil").innerHTML=`${personCards}
+ <div class="card"><h2>Kinder</h2><p class="mut">Alter der Kinder, durch Komma getrennt (leer = keine).</p>
+  <input id="kids" type="text" inputmode="numeric" value="${S.kids.join(", ")}" placeholder="z. B. 3, 6"></div>
+ <div class="card"><h2>Haushalt & Immobilie</h2>
+  <div class="row"><div>${fld("Haushaltsausgaben/Monat gesamt (€)","hhexp",S.hh.exp)}</div><div>${fld("Liquides Vermögen (€)","sav",S.hh.savings)}</div></div>
+  <div class="row"><div>${fld("Darlehen Restschuld (€)","drest",S.debt.rest)}</div><div>${fld("Restlaufzeit Darlehen (Jahre)","dyears",S.debt.years)}</div></div>
+  <div class="row"><div>${fld("Monatliche Rate (€), steckt in Ausgaben","drate",S.debt.rate)}</div><div>${fld("Anteil absichern (%)","dshare",S.debt.share)}</div></div>
+  <div class="note info">Anteil: Haften beide für das Darlehen, kann der/die Hinterbliebene es oft allein nicht tragen. Dann 100 % ansetzen.</div></div>
+ <div class="card"><h2>Annahmen (anpassbar)</h2>
+  <div class="row"><div>${fld("Kindergeld €/Kind/Monat","kg",S.par.kg)}</div><div>${fld("Waisenrente €/Kind/Monat (Schätzung!)","waise",S.par.waise)}</div></div>
+  <div class="row"><div>${fld("Kind selbstständig mit (Alter)","indep",S.par.indep)}</div><div>${fld("Mindest-Übergangszeit (Jahre)","transit",S.par.transit)}</div></div>
+  <div class="row"><div>${fld("Kosten pro Kind €/Monat","kidcost",S.par.kidCost)}</div><div>${fld("Arbeitszeit-Reduktion bei Kind unter 10 (%)","care",S.par.care)}</div></div>
+  <div class="row"><div>${fld("Zins für Barwert (%)","disc",S.par.disc)}</div><div>${fld("Bestattung (€)","fun",S.hh.funeral)}</div></div>
+  <div class="row"><div>${fld("Vermögen davon nutzbar (%)","usesav",S.hh.useSav)}</div><div></div></div></div>
+ <p class="mut">Alle Daten bleiben nur auf diesem Gerät (localStorage). Keine Konto- oder Ausweisnummern eingeben.</p>
+ <button class="del" id="reset">Alles zurücksetzen</button>`;
+ const b=(id,fn)=>$(id).addEventListener("change",e=>{fn(e.target.value);save();renderBedarf();renderAngebote();renderCheck()});
+ S.p.forEach((_,i)=>{b("p"+i+"name",v=>S.p[i].name=v||"Person "+"AB"[i]);b("p"+i+"age",v=>S.p[i].age=num(v));b("p"+i+"net",v=>S.p[i].net=num(v));
+  b("p"+i+"sex",v=>S.p[i].sex=v);b("p"+i+"smoker",v=>S.p[i].smoker=v==="1");b("e"+i,v=>S.existing[i]=num(v));b("o"+i,v=>S.hh.other[i]=num(v))});
+ b("kids",v=>S.kids=v.split(/[,; ]+/).map(x=>x.trim()).filter(Boolean).map(num));
+ b("hhexp",v=>S.hh.exp=num(v));b("sav",v=>S.hh.savings=num(v));b("drest",v=>S.debt.rest=num(v));b("dyears",v=>S.debt.years=num(v));
+ b("drate",v=>S.debt.rate=num(v));b("dshare",v=>S.debt.share=num(v));b("kg",v=>S.par.kg=num(v));b("waise",v=>S.par.waise=num(v));
+ b("indep",v=>S.par.indep=num(v));b("transit",v=>S.par.transit=num(v));b("kidcost",v=>S.par.kidCost=num(v));b("care",v=>S.par.care=num(v));
+ b("disc",v=>S.par.disc=num(v));b("fun",v=>S.hh.funeral=num(v));b("usesav",v=>S.hh.useSav=num(v));
+ $("reset").onclick=()=>{if(confirm("Wirklich alle Daten löschen?")){S=structuredClone(DEF);save();renderAll()}};
+}
+
+/* ---------- Render: Bedarf ---------- */
+function renderBedarf(){
+ const out=S.p.map((p,i)=>{
+  const n=needFor(i),surv=S.p[1-i].name;
+  const debtPart=Math.min(n.debt,n.sum),incPart=Math.max(0,n.sum-debtPart);
+  const constSum=n.sum;
+  const e1=estimate(p,n.term,()=>constSum);
+  const e2=estimate(p,n.term,t=>{
+    const d=n.debtYears?Math.max(0,debtPart*(1-t/n.debtYears)):0;
+    const inc=t<n.yearsKids||!n.yearsKids&&t<S.par.transit?incPart:0;
+    return d+inc});
+  const maxPct=Math.max(n.gross,1);
+  return `<div class="card"><h2>Falls ${esc(p.name)} stirbt → ${esc(surv)} bleibt zurück</h2>
+  <div class="mut">Empfohlene Versicherungssumme</div><div class="big">${eur(n.sum)}</div>
+  <div class="mut">Laufzeit mind. ${n.term} Jahre (bis Alter ${p.age+n.term})</div>
+  <table>
+   <tr><td>Darlehen tilgen</td><td class="r">${eur(n.debt)}</td></tr>
+   <tr><td>Einkommenslücke (${n.years} J., Barwert)</td><td class="r">${eur(n.pv)}</td></tr>
+   <tr><td>Bestattung</td><td class="r">${eur(n.funeral)}</td></tr>
+   <tr><td>− nutzbares Vermögen</td><td class="r">−${eur(n.sav)}</td></tr>
+   <tr><td>− bestehende RLV / AG-/bAV-Leistung</td><td class="r">−${eur(n.ex+n.other)}</td></tr>
+  </table>
+  <h3>Tarifaufbau-Vorschlag</h3>
+  <div class="note info"><b>Variante 1 – einfach:</b> ${eur(constSum)} konstant, ${n.term} Jahre.<br>Orientierung: ca. <b>${Math.round(e1.zahl)}–${Math.round(e1.hoechst)} €/Monat</b> (Zahl- bis Höchstbeitrag).</div>
+  ${debtPart>0?`<div class="note info"><b>Variante 2 – Kombi (meist günstiger):</b> ${eur(incPart)} konstant für ${Math.max(n.yearsKids,S.par.transit)} J. + ${eur(debtPart)} <i>fallend</i> über ${n.debtYears||"?"} J. (passend zur Restschuld).<br>Orientierung: ca. <b>${Math.round(e2.zahl)}–${Math.round(e2.hoechst)} €/Monat</b>.</div>`:""}
+  <p class="mut">Preisband = grobe Modellrechnung (±30 %), nur zur Plausibilitätsprüfung von Angeboten. Echte Preise kommen von Anbietern und hängen von Beruf, BMI, Gesundheit ab.</p></div>`}).join("");
+ const hi=S.p.map((p,i)=>needFor(i)).reduce((a,b)=>a.sum>=b.sum?a:b);
+ $("s-bedarf").innerHTML=out+`
+ <div class="card"><h2>Warum Paare ohne Trauschein anders rechnen</h2>
+  <div class="note bad"><b>Keine Witwen-/Witwerrente</b> – der Rechner setzt sie bewusst nicht an. Nur Kinder erhalten Waisenrente.</div>
+  <div class="note bad"><b>Erbschaftsteuer:</b> Nicht Verheiratete = Steuerklasse III, nur 20.000 € Freibetrag, 30 % Steuersatz. Zahlt die Versicherung 300.000 € an den/die Partner:in aus, kämen auf 280.000 € rund 84.000 € Steuer zu.</div>
+  <div class="note ok"><b>Lösung: Überkreuz-Konstruktion.</b> Jede:r ist Versicherungsnehmer:in <i>und</i> Bezugsberechtigte:r für das Leben des/der anderen. Die Auszahlung ist dann in der Regel nicht erbschaftsteuerpflichtig. Genau so bei den Anbietern beantragen (Versicherungsnehmer ≠ versicherte Person).</div>
+  <div class="note warn"><b>Kein gesetzliches Erbrecht</b> unter Partner:innen → Testament / Erbvertrag. <b>Sorgerecht:</b> Ist ein Elternteil nicht verheiratet, braucht es eine Sorgeerklärung, sonst fehlt dem Überlebenden evtl. das Sorgerecht.</div>
+  <p class="mut">Steuer- und Rechtsangaben ohne Gewähr (Stand 2026). Vor Abschluss durch Steuerberater:in oder unabhängige Honorar-Versicherungsberatung prüfen lassen.</p></div>`;
+}
+
+/* ---------- Render: Angebote ---------- */
+const FEAT=[["nachv","Nachversicherungsgarantie (Heirat, Geburt, Immobilie, ohne Gesundheitsprüfung)"],["verl","Verlängerungsoption"],["terminal","Vorabzahlung bei unheilbarer Krankheit"],["kreuz","Überkreuz möglich (VN ≠ versicherte Person)"],["stund","Beitragsstundung / Pausieren möglich"]];
+let editQ=null;
+function evalQuotes(){
+ return S.quotes.map((q,idx)=>{
+  const pi=q.person,n=needFor(pi),P=S.p[pi];
+  const per100=q.zahl*12/(q.sum/1e5||1);
+  const worst=q.hoechst?q.hoechst*12/(q.sum/1e5||1):per100;
+  const e=estimate(P,q.term,()=>q.sum);
+  const feat=FEAT.filter(f=>q[f[0]]).length;
+  const flags=[];
+  if(q.sum<n.sum*0.95)flags.push(["warn","Summe unter Bedarf ("+eur(n.sum)+")"]);
+  if(q.term<n.term)flags.push(["warn","Laufzeit kürzer als empfohlen ("+n.term+" J.)"]);
+  if(!q.nachv)flags.push(["bad","Keine Nachversicherungsgarantie"]);
+  if(!q.kreuz)flags.push(["bad","Überkreuz nicht möglich → Erbschaftsteuerrisiko"]);
+  if(q.hoechst&&q.zahl&&q.hoechst/q.zahl>1.8)flags.push(["warn","Hohe Beitragsspanne (Höchst/Zahl = "+(q.hoechst/q.zahl).toFixed(1)+"×)"]);
+  if(q.zahl<e.zahl*0.6)flags.push(["warn","Auffällig günstig – Leistungsumfang prüfen"]);
+  return Object.assign({idx,per100,worst,feat,flags,est:e});
+ });
+}
+function renderAngebote(){
+ const ev=evalQuotes();
+ const groups=[0,1].map(pi=>{
+  const list=ev.filter(x=>S.quotes[x.idx].person===pi);
+  if(!list.length)return "";
+  const bestWorst=Math.min(...list.map(x=>x.worst));
+  list.forEach(x=>{const q=S.quotes[x.idx];const fit=(q.sum>=needFor(pi).sum*0.95?1:.6)*(q.term>=needFor(pi).term?1:.7);
+    x.score=Math.round((70*bestWorst/x.worst+30*x.feat/FEAT.length)*fit)});
+  list.sort((a,b)=>b.score-a.score);
+  return `<div class="card"><h2>Versichert: ${esc(S.p[pi].name)}</h2>
+  ${list.map((x,k)=>{const q=S.quotes[x.idx];return `<div style="border-top:${k?"1px solid var(--line)":"0"};padding:10px 0">
+   <div><b>${esc(q.name||"Angebot")}</b> <span class="mut">· ${esc(q.src)}</span> ${k===0?'<span class="badge">Beste Preis-Leistung</span>':""}</div>
+   <div class="mut">${eur(q.sum)} · ${q.term} J. · ${q.type}</div>
+   <div>${eur(q.zahl)}/Mon. Zahlbeitrag${q.hoechst?` · ${eur(q.hoechst)} Höchst`:""} · Score <b>${x.score}</b></div>
+   <div class="mut">${x.per100.toFixed(1)} €/Jahr je 100.000 € · Modell-Orientierung ${Math.round(x.est.zahl)}–${Math.round(x.est.hoechst)} €</div>
+   ${x.flags.map(f=>`<div class="note ${f[0]}" style="padding:4px 10px;margin:4px 0">${esc(f[1])}</div>`).join("")}
+   <button class="sec" data-ed="${x.idx}">Bearbeiten</button> <button class="del" data-rm="${x.idx}">Löschen</button></div>`}).join("")}</div>`}).join("");
+ const best=[0,1].map(pi=>{const l=ev.filter(x=>S.quotes[x.idx].person===pi);if(!l.length)return null;
+  const bw=Math.min(...l.map(x=>x.worst));return l.map(x=>({...x,s:(70*bw/x.worst+30*x.feat/FEAT.length)})).sort((a,b)=>b.s-a.s)[0]});
+ const sumLine=best[0]&&best[1]?`<div class="note ok"><b>Beste Kombination:</b> ${esc(S.quotes[best[0].idx].name)} für ${esc(S.p[0].name)} + ${esc(S.quotes[best[1].idx].name)} für ${esc(S.p[1].name)} = <b>${eur(S.quotes[best[0].idx].zahl+S.quotes[best[1].idx].zahl)}/Monat</b> (Zahlbeitrag).</div>`:"";
+ const q=editQ!==null?(editQ>=0?S.quotes[editQ]:{person:0,src:"Check24",name:"",sum:needFor(0).sum,term:needFor(0).term,type:"konstant",zahl:0,hoechst:0,nachv:true,kreuz:true}):null;
+ const form=q?`<div class="card"><h2>${editQ>=0?"Angebot bearbeiten":"Angebot erfassen"}</h2>
+  <div class="row"><div><label>Versicherte Person</label><select id="qp">${S.p.map((p,i)=>`<option value="${i}" ${q.person===i?"selected":""}>${esc(p.name)}</option>`).join("")}</select></div>
+  <div><label>Quelle</label><select id="qs">${["Check24","HUK24","Verivox","Direktversicherer","Makler/Berater","Sonstige"].map(s=>`<option ${q.src===s?"selected":""}>${s}</option>`).join("")}</select></div></div>
+  ${fld("Versicherer / Tarif","qn",q.name,"text")}
+  <div class="row"><div>${fld("Versicherungssumme €","qsum",q.sum)}</div><div>${fld("Laufzeit (Jahre)","qterm",q.term)}</div></div>
+  <div class="row"><div>${fld("Zahlbeitrag €/Monat","qz",q.zahl)}</div><div>${fld("Höchstbeitrag €/Monat","qh",q.hoechst)}</div></div>
+  <label>Tarifart</label><select id="qt">${["konstant","fallend","Staffel"].map(s=>`<option ${q.type===s?"selected":""}>${s}</option>`).join("")}</select>
+  ${FEAT.map(f=>`<label class="chk"><input type="checkbox" id="q_${f[0]}" ${q[f[0]]?"checked":""}>${f[1]}</label>`).join("")}
+  <button id="qsave">Speichern</button> <button class="sec" id="qcancel">Abbrechen</button></div>`:"";
+ $("s-angebote").innerHTML=`
+ <div class="card"><h2>Angebote einholen</h2>
+  <div class="note info">Check24, HUK24 & Co. bieten keine offene Schnittstelle und sperren automatisches Abfragen. Deshalb: Du gibst die Daten dort ein (Kopier-Block unten), trägst die Ergebnisse hier ein, und die App bewertet sie wie ein Berater.</div>
+  <a class="linkbtn" href="https://www.check24.de/risikolebensversicherung/" target="_blank" rel="noopener">Check24 öffnen</a>
+  <a class="linkbtn" href="https://www.huk24.de/" target="_blank" rel="noopener">HUK24 öffnen (Direktversicherer)</a>
+  <a class="linkbtn" href="https://www.verivox.de/lebensversicherung/risikolebensversicherung/" target="_blank" rel="noopener">Verivox öffnen</a>
+  <a class="linkbtn" href="https://www.cosmosdirekt.de/risikolebensversicherung/" target="_blank" rel="noopener">CosmosDirekt öffnen</a>
+  <button class="sec" id="copyspec">Eingabe-Spickzettel kopieren</button>
+  <div class="note warn"><b>Wichtig:</b> Erst nur Preisanfragen, <b>keine</b> Anträge parallel. Abgelehnte Anträge werden im Hinweis- und Informationssystem der Versicherer gespeichert. Bei Vorerkrankungen vorab anonyme Risikovoranfrage über Makler/Honorarberater.</div></div>
+ ${form}${sumLine}${groups||'<p class="mut">Noch keine Angebote erfasst.</p>'}
+ <button id="addq">+ Angebot erfassen</button>`;
+ $("addq").onclick=()=>{editQ=-1;renderAngebote();window.scrollTo(0,0)};
+ $("copyspec").onclick=()=>copy(spec());
+ document.querySelectorAll("[data-ed]").forEach(b=>b.onclick=()=>{editQ=+b.dataset.ed;renderAngebote();window.scrollTo(0,0)});
+ document.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{if(confirm("Angebot löschen?")){S.quotes.splice(+b.dataset.rm,1);save();renderAngebote()}});
+ if(q){$("qcancel").onclick=()=>{editQ=null;renderAngebote()};
+  $("qsave").onclick=()=>{const o={person:+$("qp").value,src:$("qs").value,name:$("qn").value,sum:num($("qsum").value),term:num($("qterm").value),type:$("qt").value,zahl:num($("qz").value),hoechst:num($("qh").value)};
+   FEAT.forEach(f=>o[f[0]]=$("q_"+f[0]).checked);
+   if(!o.sum||!o.term||!o.zahl){alert("Summe, Laufzeit und Zahlbeitrag angeben.");return}
+   if(editQ>=0)S.quotes[editQ]=o;else S.quotes.push(o);editQ=null;save();renderAngebote()}}
+}
+function spec(){
+ const L=["RLV-Anfrage (Überkreuz, Paar nicht verheiratet)","Tarif: Risikolebensversicherung, Überkreuz: Versicherungsnehmer = Bezugsberechtigter = jeweils der/die andere","Gesundheitsfragen nur wahrheitsgemäß, zunächst nur Preisanfrage"];
+ S.p.forEach((p,i)=>{const n=needFor(i);L.push(`${p.name}: ${p.age} J., ${p.sex==="w"?"w":"m"}, ${p.smoker?"Raucher":"Nichtraucher"}, Summe ${eur(n.sum)}, Laufzeit ${n.term} J.`)});
+ L.push("Gewünscht: Nachversicherungsgarantie, Verlängerungsoption, Überschussverwendung: Beitragsverrechnung");
+ return L.join("\n");
+}
+function copy(t){navigator.clipboard?.writeText(t).then(()=>alert("Kopiert.")).catch(()=>prompt("Zum Kopieren:",t))}
+
+/* ---------- Render: Check ---------- */
+function renderCheck(){
+ const kids=S.kids.length>0,debt=S.debt.rest>0;
+ const items=[
+  ["kreuz","Überkreuz-Konstruktion: zwei Verträge, jeweils Versicherungsnehmer = Bezugsberechtigter","Vermeidet Erbschaftsteuer (Klasse III, 30 %)."],
+  ["vor","Gesundheit: bei Vorerkrankungen anonyme Risikovoranfrage vor dem Antrag","Schützt vor Ablehnungseinträgen."],
+  ["testa","Testament oder Erbvertrag für beide","Ohne Trauschein kein gesetzliches Erbrecht."],
+  ["vollm","Vorsorgevollmacht + Patientenverfügung gegenseitig","Partner:in hat sonst keine Entscheidungsbefugnis."],
+  ["bez","Bezugsrechte aller Verträge prüfen (bAV, Kapital-LV, Unfall)","Ohne Eintrag fällt es evtl. an Eltern/Erben."],
+  ["bu","Berufsunfähigkeit prüfen: Meist wichtiger als Todesfallschutz","BU trifft deutlich häufiger als vorzeitiger Tod."],
+  ...(kids?[["sorge","Sorgeerklärung beim Jugendamt, falls noch nicht erfolgt","Sonst hat nur die Mutter das Sorgerecht."],["vorm","Vormundschaft/Betreuung der Kinder im Testament regeln","Falls beide Eltern ausfallen."]]:[]),
+  ...(debt?[["dar","Darlehensvertrag: Mithaftung & Grundbuch-Eigentumsanteile klären","Entscheidet, wie viel RLV je Person nötig ist."],["fall","Fallende Summe für den Darlehensanteil prüfen","Spart oft 20–40 % Beitrag."]]:[]),
+  ["nach","Nachversicherungsgarantie in jedem Angebot vorhanden","Erlaubt Erhöhung bei Hauskauf/Geburt ohne neue Gesundheitsprüfung."],
+  ["trenn","Trennungsfall bedenken: Vertrag auf eine:n Partner:in übertragbar?","Beitrag läuft sonst weiter, Bezugsrecht ändern."],
+  ["prof","Ergebnis von unabhängiger Honorar-Versicherungsberatung gegenprüfen lassen","Portale vermitteln gegen Provision; Honorarberater nicht."]
+ ];
+ const done=items.filter(i=>S.done[i[0]]).length;
+ $("s-check").innerHTML=`<div class="card"><h2>Berater-Check</h2><div class="bar"><i style="width:${done/items.length*100}%"></i></div><p class="mut">${done} von ${items.length} erledigt</p>
+  ${items.map(i=>`<label class="chk" style="align-items:flex-start"><input type="checkbox" data-k="${i[0]}" ${S.done[i[0]]?"checked":""}><span>${esc(i[1])}<br><span class="mut">${esc(i[2])}</span></span></label>`).join("")}</div>
+  <div class="card"><h2>Zusammenfassung</h2><button id="copysum">Zusammenfassung kopieren</button></div>
+  <p class="mut">Die App ersetzt keine rechtliche oder steuerliche Beratung. Sie bündelt die Fragen, die ein guter Berater stellt.</p>`;
+ document.querySelectorAll("[data-k]").forEach(c=>c.onchange=()=>{S.done[c.dataset.k]=c.checked;save();renderCheck()});
+ $("copysum").onclick=()=>copy(spec()+"\n\nBedarf:\n"+S.p.map((p,i)=>{const n=needFor(i);return `${p.name}: ${eur(n.sum)} / ${n.term} J.`}).join("\n"));
+}
+
+function renderAll(){renderProfil();renderBedarf();renderAngebote();renderCheck()}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll("nav button,section").forEach(e=>e.classList.remove("on"));
+ b.classList.add("on");$("s-"+b.dataset.t).classList.add("on");window.scrollTo(0,0)});
+renderAll();
+if("serviceWorker"in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
